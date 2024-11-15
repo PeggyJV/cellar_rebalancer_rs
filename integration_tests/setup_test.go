@@ -15,15 +15,18 @@ import (
 	"testing"
 	"time"
 
-	gravitytypes "github.com/peggyjv/gravity-bridge/module/v4/x/gravity/types"
+	gravitytypes "github.com/peggyjv/gravity-bridge/module/v5/x/gravity/types"
 
-	corktypes "github.com/peggyjv/sommelier/v7/x/cork/types"
-	corktypesv2 "github.com/peggyjv/sommelier/v7/x/cork/types/v2"
-	incentivestypes "github.com/peggyjv/sommelier/v7/x/incentives/types"
+	corktypes "github.com/peggyjv/sommelier/v8/x/cork/types"
+	corktypesv2 "github.com/peggyjv/sommelier/v8/x/cork/types/v2"
+	incentivestypes "github.com/peggyjv/sommelier/v8/x/incentives/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	tmconfig "github.com/cometbft/cometbft/config"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
@@ -32,20 +35,18 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	auctiontypes "github.com/peggyjv/sommelier/v7/x/auction/types"
-	axelarcorktypes "github.com/peggyjv/sommelier/v7/x/axelarcork/types"
-	cellarfeestypes "github.com/peggyjv/sommelier/v7/x/cellarfees/types"
-	pubsubtypes "github.com/peggyjv/sommelier/v7/x/pubsub/types"
+	auctiontypes "github.com/peggyjv/sommelier/v8/x/auction/types"
+	axelarcorktypes "github.com/peggyjv/sommelier/v8/x/axelarcork/types"
+	cellarfeestypes "github.com/peggyjv/sommelier/v8/x/cellarfees/types"
+	cellarfeestypesv2 "github.com/peggyjv/sommelier/v8/x/cellarfees/types/v2"
+	pubsubtypes "github.com/peggyjv/sommelier/v8/x/pubsub/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
-	tmconfig "github.com/tendermint/tendermint/config"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 const (
@@ -74,6 +75,7 @@ var (
 	adaptorContract = common.HexToAddress("0x0000000000000000000000000000000000000000")
 	gravityContract = common.HexToAddress("0x04C89607413713Ec9775E14b954286519d836FEf")
 	v2_2Cellar      = common.HexToAddress("0x0000000000000000000000000000000000000000")
+	managerContract = common.HexToAddress("0x0000000000000000000000000000000000000000")
 )
 
 type IntegrationTestSuite struct {
@@ -337,12 +339,12 @@ func (s *IntegrationTestSuite) initGenesis() {
 	s.Require().NoError(err)
 	appGenState[minttypes.ModuleName] = bz
 
-	var govGenState govtypesv1beta1.GenesisState
+	var govGenState govtypesv1.GenesisState
+	govGenState.Params = &govtypesv1.Params{}
+	duration := time.Second * 20
+	govGenState.Params.VotingPeriod = &duration
+	govGenState.Params.MinDeposit = sdk.Coins{{Denom: testDenom, Amount: sdk.OneInt()}}
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState))
-
-	// set short voting period to allow gov proposals in tests
-	govGenState.VotingParams.VotingPeriod = time.Second * 20
-	govGenState.DepositParams.MinDeposit = sdk.Coins{{Denom: testDenom, Amount: sdk.OneInt()}}
 	bz, err = cdc.MarshalJSON(&govGenState)
 	s.Require().NoError(err)
 	appGenState[govtypes.ModuleName] = bz
@@ -377,7 +379,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 	corkGenState := corktypesv2.DefaultGenesisState()
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[corktypes.ModuleName], &corkGenState))
 	corkGenState.CellarIds = corktypesv2.CellarIDSet{
-		Ids: []string{aaveCellar.Hex(), vaultCellar.Hex(), v2_2Cellar.Hex()},
+		Ids: []string{aaveCellar.Hex(), vaultCellar.Hex(), v2_2Cellar.Hex(), managerContract.Hex()},
 	}
 	bz, err = cdc.MarshalJSON(&corkGenState)
 	s.Require().NoError(err)
@@ -418,7 +420,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 	s.Require().NoError(err)
 	appGenState[auctiontypes.ModuleName] = bz
 
-	cellarfeesGenState := cellarfeestypes.DefaultGenesisState()
+	cellarfeesGenState := cellarfeestypesv2.DefaultGenesisState()
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[cellarfeestypes.ModuleName], &cellarfeesGenState))
 	bz, err = cdc.MarshalJSON(&cellarfeesGenState)
 	s.Require().NoError(err)
@@ -460,6 +462,13 @@ func (s *IntegrationTestSuite) initGenesis() {
 			AllowedSubscribers: 0,
 			AllowedAddresses:   []string{},
 		},
+		{
+			SubscriptionId:     fmt.Sprintf("1:%s", managerContract.Hex()),
+			PublisherDomain:    "localhost",
+			Method:             1,
+			AllowedSubscribers: 0,
+			AllowedAddresses:   []string{},
+		},
 	}
 	pubsubGenState.DefaultSubscriptions = []*pubsubtypes.DefaultSubscription{
 		{
@@ -472,6 +481,10 @@ func (s *IntegrationTestSuite) initGenesis() {
 		},
 		{
 			SubscriptionId:  fmt.Sprintf("1:%s", v2_2Cellar.Hex()),
+			PublisherDomain: "localhost",
+		},
+		{
+			SubscriptionId:  fmt.Sprintf("1:%s", managerContract.Hex()),
 			PublisherDomain: "localhost",
 		},
 	}
@@ -545,6 +558,7 @@ func (s *IntegrationTestSuite) initValidatorConfigs() {
 		appCfgPath := filepath.Join(val.configDir(), "config", "app.toml")
 
 		appConfig := srvconfig.DefaultConfig()
+		appConfig.GRPC.Address = "0.0.0.0:9090"
 		appConfig.API.Enable = true
 		appConfig.Pruning = "nothing"
 		appConfig.MinGasPrices = fmt.Sprintf("%s%s", minGasPrice, testDenom)
@@ -675,10 +689,23 @@ func (s *IntegrationTestSuite) runEthContainer() {
 		return false
 	}, time.Minute*5, time.Second*10, "unable to retrieve adaptor address from logs")
 
+	s.Require().Eventuallyf(func() bool {
+
+		for _, s := range strings.Split(ethereumLogOutput.String(), "\n") {
+			if strings.HasPrefix(s, "manager contract deployed at") {
+				strSpl := strings.Split(s, "-")
+				managerContract = common.HexToAddress(strings.ReplaceAll(strSpl[1], " ", ""))
+				return true
+			}
+		}
+		return false
+	}, time.Minute*5, time.Second*10, "unable to retrieve manager address from logs")
+
 	s.T().Logf("gravity contract deployed at %s", gravityContract.String())
 	s.T().Logf("aave contract deployed at %s", aaveCellar.String())
 	s.T().Logf("vault cellar contract deployed at %s", vaultCellar.String())
 	s.T().Logf("adaptor contract deployed at %s", adaptorContract.String())
+	s.T().Logf("manager contract deployed at %s", managerContract.String())
 
 	s.T().Logf("started Ethereum container: %s", s.ethResource.Container.ID)
 }

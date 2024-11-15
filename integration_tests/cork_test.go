@@ -5,6 +5,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -18,8 +20,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	gravityTypes "github.com/peggyjv/gravity-bridge/module/v4/x/gravity/types"
-	corktypesv2 "github.com/peggyjv/sommelier/v7/x/cork/types/v2"
+	gravityTypes "github.com/peggyjv/gravity-bridge/module/v5/x/gravity/types"
+	corktypesv2 "github.com/peggyjv/sommelier/v8/x/cork/types/v2"
 	"github.com/peggyjv/steward/steward_proto_go/steward_proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -111,11 +113,7 @@ func (s *IntegrationTestSuite) TestAaveV2Stablecoin() {
 
 		s.queryLogicCallTransaction(clientCtx, invalidationScope, invalidationNonce)
 
-		// For non-anonymous events, the first log topic is a keccak256 hash o	f the
-		// event signature.
-		eventSignature := []byte("LogicCallEvent(bytes32,uint256,bytes,uint256)")
-		logicCallEventSignatureTopic := crypto.Keccak256Hash(eventSignature)
-		s.waitForGravityLogicCallEvent(logicCallEventSignatureTopic, invalidationScope, invalidationNonce)
+		s.waitForGravityLogicCallEvent(invalidationScope, invalidationNonce)
 
 		s.T().Logf("checking for cellar event")
 		s.Require().Eventuallyf(func() bool {
@@ -318,11 +316,7 @@ func (s *IntegrationTestSuite) TestCellarV1() {
 			invalidationNonce := sequence + 1
 			s.queryLogicCallTransaction(clientCtx, invalidationScope, invalidationNonce)
 
-			// For non-anonymous events, the first log topic is a keccak256 hash of the
-			// event signature.
-			eventSignature := []byte("LogicCallEvent(bytes32,uint256,bytes,uint256)")
-			logicCallEventSignatureTopic := crypto.Keccak256Hash(eventSignature)
-			s.waitForGravityLogicCallEvent(logicCallEventSignatureTopic, invalidationScope, invalidationNonce)
+			s.waitForGravityLogicCallEvent(invalidationScope, invalidationNonce)
 
 			s.T().Logf("checking for cellar event")
 			s.Require().Eventuallyf(func() bool {
@@ -785,6 +779,119 @@ func (s *IntegrationTestSuite) TestCellarV2_2() {
 	})
 }
 
+func (s *IntegrationTestSuite) TestBoringVaultManager() {
+	s.Run("Set the manage root of the Manager contract", func() {
+		s.checkCellarExists(managerContract)
+
+		cellarId := managerContract.String()
+
+		val := s.chain.validators[0]
+		kb, err := val.keyring()
+		s.Require().NoError(err)
+		clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &kb, "val", val.address())
+		s.Require().NoError(err)
+		currentHeight, err := s.GetLatestBlockHeight(clientCtx)
+		s.Require().NoError(err)
+		scheduledHeight := currentHeight + 10
+
+		// Create the cork request to send to Steward
+		manageRoot := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+		strategist := "0x1111111111111111111111111111111111111111"
+		request := &steward_proto.ScheduleRequest{
+			ChainId:  1,
+			CellarId: cellarId,
+			CallData: &steward_proto.ScheduleRequest_BoringVaultManagerWithMerkleVerification{
+				BoringVaultManagerWithMerkleVerification: &steward_proto.BoringVaultManagerWithMerkleVerification{
+					Function: &steward_proto.BoringVaultManagerWithMerkleVerification_SetManageRoot_{
+						SetManageRoot: &steward_proto.BoringVaultManagerWithMerkleVerification_SetManageRoot{
+							ManageRoot: manageRoot,
+							Strategist: strategist,
+						},
+					},
+				},
+			},
+			BlockHeight: uint64(scheduledHeight),
+		}
+
+		s.executeStewardCalls(request)
+		s.waitForScheduledHeight(clientCtx, scheduledHeight)
+
+		// Construct invalidation scope and nonce for gravity query
+		managerABI, err := ManagerWithMerkleVerificationMetaData.GetAbi()
+		s.Require().NoError(err)
+
+		methodName := "setManageRoot"
+		var manageRootBytes [32]byte
+		manageRootHex, err := hex.DecodeString(manageRoot)
+		s.Require().NoError(err)
+		copy(manageRootBytes[:], manageRootHex)
+		method, err := managerABI.Pack(methodName, common.HexToAddress(strategist), manageRootBytes)
+		s.Require().NoError(err)
+		addr := common.HexToAddress(cellarId)
+		invalidationScope := crypto.Keccak256Hash(
+			bytes.Join(
+				[][]byte{addr.Bytes(), method},
+				[]byte{},
+			)).Bytes()
+		invalidationNonce := 1
+
+		s.queryLogicCallTransaction(clientCtx, invalidationScope, invalidationNonce)
+
+		// For non-anonymous events, the first log topic is a keccak256 hash o	f the
+		// event signature.
+		s.waitForGravityLogicCallEvent(invalidationScope, invalidationNonce)
+
+		s.T().Logf("checking for contract event")
+		s.Require().Eventuallyf(func() bool {
+			s.T().Log("querying contract events...")
+			ethClient, err := ethclient.Dial(fmt.Sprintf("http://%s", s.ethResource.GetHostPort("8545/tcp")))
+			if err != nil {
+				return false
+			}
+
+			// For non-anonymous events, the first log topic is a keccak256 hash of the
+			// event signature.
+			eventSignature := []byte("ManageRootUpdated(address,bytes32,bytes32)")
+			manageRootUpdatedEventSignatureTopic := crypto.Keccak256Hash(eventSignature)
+			query := ethereum.FilterQuery{
+				FromBlock: nil,
+				ToBlock:   nil,
+				Addresses: []common.Address{
+					managerContract,
+				},
+				Topics: [][]common.Hash{
+					{
+						manageRootUpdatedEventSignatureTopic,
+					},
+				},
+			}
+
+			logs, err := ethClient.FilterLogs(context.Background(), query)
+			if err != nil {
+				ethClient.Close()
+				return false
+			}
+			s.T().Logf("got %v logs", len(logs))
+			if len(logs) == 1 {
+				s.T().Log("saw ManageRootUpdated event!")
+
+				log := logs[0]
+				if len(log.Topics) >= 2 { // First topic is event signature, second is indexed strategist
+					strategistAddr := common.HexToAddress(log.Topics[1].Hex())
+					var event ManagerWithMerkleVerificationManageRootUpdated
+					err := managerABI.UnpackIntoInterface(&event, "ManageRootUpdated", log.Data)
+					s.Require().NoError(err, "failed to unpack ManageRootUpdated event from log data")
+					s.Require().Equal(strategist, strategistAddr.Hex())
+					s.Require().Equal(manageRoot, hex.EncodeToString(event.NewRoot[:]))
+					return true
+				}
+			}
+
+			return false
+		}, 2*time.Minute, 5*time.Second, "contract event never seen")
+	})
+}
+
 func (s *IntegrationTestSuite) checkCellarExists(cellar common.Address) {
 	s.T().Logf("checking that cellar %s exists in the chain", cellar.String())
 	queryClient, err := s.chain.validators[0].GetQueryClient()
@@ -871,13 +978,15 @@ func (s *IntegrationTestSuite) executeStewardCalls(request *steward_proto.Schedu
 }
 
 func (s *IntegrationTestSuite) queryLogicCallTransaction(clientCtx *client.Context, invalidationScope []byte, invalidationNonce int) {
-	s.T().Log("querying gravity module for logic call transaction")
+	s.T().Logf("querying gravity module for logic call transaction with invalidation scope %s and nonce %d", base64.StdEncoding.EncodeToString(invalidationScope), invalidationNonce)
 	gravityQueryClient := gravityTypes.NewQueryClient(clientCtx)
 	s.Require().Eventuallyf(func() bool {
 		request := &gravityTypes.ContractCallTxsRequest{
 			Pagination: &query.PageRequest{},
 		}
 		response, _ := gravityQueryClient.ContractCallTxs(context.Background(), request)
+		completedRequest := &gravityTypes.CompletedContractCallTxsRequest{}
+		completedResponse, _ := gravityQueryClient.CompletedContractCallTxs(context.Background(), completedRequest)
 		if response != nil {
 			for _, call := range response.Calls {
 				if bytes.Equal(call.InvalidationScope, invalidationScope) && call.InvalidationNonce == uint64(invalidationNonce) {
@@ -886,9 +995,17 @@ func (s *IntegrationTestSuite) queryLogicCallTransaction(clientCtx *client.Conte
 				}
 			}
 		}
+		if completedResponse != nil {
+			for _, call := range completedResponse.CompletedContractCallTxs {
+				if bytes.Equal(call.InvalidationScope, invalidationScope) && call.InvalidationNonce == uint64(invalidationNonce) {
+					s.T().Log("completed logic call found in the gravity module!")
+					return true
+				}
+			}
+		}
 
 		return false
-	}, 1*time.Minute, 5*time.Second, "cellar event never seen")
+	}, 2*time.Minute, 10*time.Second, "logic call transaction never seen")
 	time.Sleep(time.Duration(2000000000))
 }
 
@@ -914,8 +1031,10 @@ func (s *IntegrationTestSuite) queryLogicCallTransactionByAddress(clientCtx *cli
 	time.Sleep(time.Duration(2000000000))
 }
 
-func (s *IntegrationTestSuite) waitForGravityLogicCallEvent(topic common.Hash, invalidationScope []byte, invalidationNonce int) {
+func (s *IntegrationTestSuite) waitForGravityLogicCallEvent(invalidationScope []byte, invalidationNonce int) {
 	s.T().Logf("waiting for gravity to submit call to cellar")
+	eventSignature := []byte("LogicCallEvent(bytes32,uint256,bytes,uint256)")
+	topic := crypto.Keccak256Hash(eventSignature)
 	gravity_abi, err := GravityMetaData.GetAbi()
 	s.Require().NoError(err)
 	s.Require().Eventuallyf(func() bool {
@@ -925,9 +1044,17 @@ func (s *IntegrationTestSuite) waitForGravityLogicCallEvent(topic common.Hash, i
 			return false
 		}
 
+		// Get the latest block number
+		latestBlock, err := ethClient.BlockNumber(context.Background())
+		if err != nil {
+			ethClient.Close()
+			return false
+		}
+		fromBlock := uint64(1)
+
 		query := ethereum.FilterQuery{
-			FromBlock: nil,
-			ToBlock:   nil,
+			FromBlock: big.NewInt(int64(fromBlock)),
+			ToBlock:   big.NewInt(int64(latestBlock)),
 			Addresses: []common.Address{
 				gravityContract,
 			},
@@ -966,5 +1093,5 @@ func (s *IntegrationTestSuite) waitForGravityLogicCallEvent(topic common.Hash, i
 			}
 		}
 		return false
-	}, 1*time.Minute, 5*time.Second, "cellar event never seen")
+	}, 2*time.Minute, 10*time.Second, "LogicCallEvent never seen")
 }

@@ -1,0 +1,271 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_owner",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_vault",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_balancerVault",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__BadFlashLoanIntentHash",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "target",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes",
+                "name": "targetData",
+                "type": "bytes"
+            },
+            {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "ManagerWithMerkleVerification__FailedToVerifyManageProof",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__FlashLoanNotExecuted",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__FlashLoanNotInProgress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__InvalidDecodersAndSanitizersLength",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__InvalidManageProofLength",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__InvalidTargetDataLength",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__InvalidValuesLength",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__OnlyCallableByBalancerVault",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__OnlyCallableByBoringVault",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__Paused",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ManagerWithMerkleVerification__TotalSupplyMustRemainConstantDuringPlatform",
+        "type": "error"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "callsMade",
+                "type": "uint256"
+            }
+        ],
+        "name": "BoringVaultManaged",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "strategist",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "oldRoot",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "newRoot",
+                "type": "bytes32"
+            }
+        ],
+        "name": "ManageRootUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnerUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [],
+        "name": "Paused",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [],
+        "name": "Unpaused",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "isPaused",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "manageRoot",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "pause",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "strategist",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_manageRoot",
+                "type": "bytes32"
+            }
+        ],
+        "name": "setManageRoot",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "setOwner",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "unpause",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "vault",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]

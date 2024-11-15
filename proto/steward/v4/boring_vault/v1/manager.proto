@@ -1,0 +1,33 @@
+/*
+* Protos for function calls to Boring Vault Manager contracts
+*/
+
+syntax = "proto3";
+package steward.v4;
+
+option go_package = "/steward_proto";
+
+message BoringVaultManagerWithMerkleVerification {
+    oneof function {
+        // Represents function `setManageRoot(address strategist, bytes32 merkleRoot)`
+        SetManageRoot set_manage_root = 1;
+        // Represents function `pause()`
+        Pause pause = 2;
+        // Represents function `unpause()`
+        Unpause unpause = 3;
+    }
+
+    // Represents function `setManageRoot(address strategist, bytes32 merkleRoot)`
+    message SetManageRoot {
+        // The address of the strategist
+        string strategist = 1;
+        // The manage root to set
+        string manage_root = 2;
+    }
+
+    // Represents function `pause()`
+    message Pause {}
+
+    // Represents function `unpause()`
+    message Unpause {}
+}

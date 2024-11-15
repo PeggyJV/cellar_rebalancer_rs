@@ -12,6 +12,7 @@ pub type CachePriceRouterArgs = (bool, u32, Option<String>);
 
 pub(crate) mod aave_v2_stablecoin;
 pub(crate) mod adaptors;
+pub(crate) mod boring_vault_manager_with_merkle_verification;
 pub(crate) mod cellar_v1;
 pub(crate) mod cellar_v2;
 pub(crate) mod cellar_v2_2;

@@ -125,15 +125,24 @@ fn generate_contract_abis() {
         ("ERC4626AdaptorV1", "erc4626_adaptor_v1"),
         ("StakingAdaptorV1", "staking_adaptor_v1"),
         ("PendleAdaptorV1", "pendle_adaptor_v1"),
+        (
+            "boring-vault/ManagerWithMerkleVerification",
+            "boring_vault/manager_with_merkle_verification",
+        ),
     ];
 
     contracts.iter().for_each(|n| {
-        let name = n.0;
-        let file_name = n.1;
-        let abigen = match Abigen::new(name, format!("abi/{}.json", name)) {
+        let json_file_name = n.0;
+        let rust_file_name = n.1;
+        let identifier = if json_file_name.contains('/') {
+            json_file_name.split('/').last().unwrap()
+        } else {
+            json_file_name
+        };
+        let abigen = match Abigen::new(identifier, format!("abi/{}.json", json_file_name)) {
             Ok(abigen) => abigen,
             Err(e) => {
-                println!("Could not open {}.json: {}", name, e);
+                println!("Could not open {}.json: {}", json_file_name, e);
                 process::exit(1);
             }
         };
@@ -145,14 +154,14 @@ fn generate_contract_abis() {
         {
             Ok(abi) => abi,
             Err(e) => {
-                println!("Could not generate abi from {}.json: {}", name, e);
+                println!("Could not generate abi from {}.json: {}", json_file_name, e);
                 process::exit(1);
             }
         };
 
-        match abi.write_to_file(format!("src/gen/abi/{}.rs", file_name)) {
+        match abi.write_to_file(format!("src/gen/abi/{}.rs", rust_file_name)) {
             Ok(_) => (),
-            Err(e) => println!("Error writing {}.rs: {}", file_name, e),
+            Err(e) => println!("Error writing {}.rs: {}", rust_file_name, e),
         }
     })
 }
@@ -162,9 +171,11 @@ fn generate_rust_protos() {
     let tmp_dir = Path::new(&TMP_PATH);
     let root = env!("CARGO_MANIFEST_DIR");
     let root: PathBuf = root.parse().unwrap();
-    let mut steward_proto_dir = root;
+    let mut steward_proto_dir = root.clone();
     steward_proto_dir.push("proto/steward/v4");
-    let steward_proto_dir = [steward_proto_dir];
+    let mut boring_vault_proto_dir = root;
+    boring_vault_proto_dir.push("proto/steward/v4/boring_vault/v1");
+    let steward_proto_dir = [steward_proto_dir, boring_vault_proto_dir];
 
     // List available proto files
     let mut protos: Vec<PathBuf> = vec![];

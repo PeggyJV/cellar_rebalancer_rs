@@ -5470,6 +5470,45 @@ pub mod governance_call {
         CellarV25(super::CellarV25governance),
     }
 }
+#[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, ::prost::Message)]
+pub struct BoringVaultManagerWithMerkleVerification {
+    #[prost(
+        oneof = "boring_vault_manager_with_merkle_verification::Function",
+        tags = "1, 2, 3"
+    )]
+    pub function: ::core::option::Option<boring_vault_manager_with_merkle_verification::Function>,
+}
+/// Nested message and enum types in `BoringVaultManagerWithMerkleVerification`.
+pub mod boring_vault_manager_with_merkle_verification {
+    /// Represents function `setManageRoot(address strategist, bytes32 merkleRoot)`
+    #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, ::prost::Message)]
+    pub struct SetManageRoot {
+        /// The address of the strategist
+        #[prost(string, tag = "1")]
+        pub strategist: ::prost::alloc::string::String,
+        /// The manage root to set
+        #[prost(string, tag = "2")]
+        pub manage_root: ::prost::alloc::string::String,
+    }
+    /// Represents function `pause()`
+    #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, ::prost::Message)]
+    pub struct Pause {}
+    /// Represents function `unpause()`
+    #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, ::prost::Message)]
+    pub struct Unpause {}
+    #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, ::prost::Oneof)]
+    pub enum Function {
+        /// Represents function `setManageRoot(address strategist, bytes32 merkleRoot)`
+        #[prost(message, tag = "1")]
+        SetManageRoot(SetManageRoot),
+        /// Represents function `pause()`
+        #[prost(message, tag = "2")]
+        Pause(Pause),
+        /// Represents function `unpause()`
+        #[prost(message, tag = "3")]
+        Unpause(Unpause),
+    }
+}
 ///
 /// Represents a scheduled function call to a particular Cellar
 #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, ::prost::Message)]
@@ -5481,13 +5520,13 @@ pub struct ScheduleRequest {
     #[prost(uint64, tag = "2")]
     pub block_height: u64,
     /// The ID of the chain on which the target Cellar resides
-    #[prost(uint64, tag = "8")]
+    #[prost(uint64, tag = "9")]
     pub chain_id: u64,
     /// The unix timestamp deadline for the contract call to be executed
-    #[prost(uint64, tag = "9")]
+    #[prost(uint64, tag = "10")]
     pub deadline: u64,
     /// The data from which the desired contract function will be encoded
-    #[prost(oneof = "schedule_request::CallData", tags = "3, 4, 5, 6, 7")]
+    #[prost(oneof = "schedule_request::CallData", tags = "3, 4, 5, 6, 7, 8")]
     pub call_data: ::core::option::Option<schedule_request::CallData>,
 }
 /// Nested message and enum types in `ScheduleRequest`.
@@ -5505,6 +5544,8 @@ pub mod schedule_request {
         CellarV22(super::CellarV22),
         #[prost(message, tag = "7")]
         CellarV25(super::CellarV25),
+        #[prost(message, tag = "8")]
+        BoringVaultManagerWithMerkleVerification(super::BoringVaultManagerWithMerkleVerification),
     }
 }
 #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, ::prost::Message)]

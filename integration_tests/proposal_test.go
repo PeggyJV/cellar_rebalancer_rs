@@ -13,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	axelarcorktypes "github.com/peggyjv/sommelier/v7/x/axelarcork/types"
-	corktypesv2 "github.com/peggyjv/sommelier/v7/x/cork/types/v2"
+	axelarcorktypes "github.com/peggyjv/sommelier/v8/x/axelarcork/types"
+	corktypesv2 "github.com/peggyjv/sommelier/v8/x/cork/types/v2"
 )
 
 func (s *IntegrationTestSuite) TestScheduledCorkProposal() {

@@ -9,7 +9,10 @@ use tonic::{self, async_trait, Code, Request, Response, Status};
 use crate::cellars::to_checksum_address;
 use crate::server::handle_authorization;
 use crate::{
-    cellars::{self, aave_v2_stablecoin, cellar_v1, cellar_v2, cellar_v2_2, cellar_v2_5},
+    cellars::{
+        self, aave_v2_stablecoin, boring_vault_manager_with_merkle_verification, cellar_v1,
+        cellar_v2, cellar_v2_2, cellar_v2_5,
+    },
     error::{
         Error,
         ErrorKind::{self, *},
@@ -146,6 +149,16 @@ pub fn get_encoded_call(request: ScheduleRequest) -> Result<Vec<u8>, Error> {
             }
 
             cellar_v2_5::get_encoded_call(call.call_type.unwrap(), request.cellar_id)
+        }
+        BoringVaultManagerWithMerkleVerification(call) => {
+            if call.function.is_none() {
+                return Err(ErrorKind::Http.context("empty function data").into());
+            }
+
+            boring_vault_manager_with_merkle_verification::get_encoded_call(
+                call.function.unwrap(),
+                request.cellar_id,
+            )
         }
     }
 }

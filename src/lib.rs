@@ -195,6 +195,12 @@ pub mod abi {
         pub mod zero_x_adaptor_v1 {
             include!("gen/abi/zero_x_adaptor_v1.rs");
         }
+
+        pub mod boring_vault {
+            pub mod manager_with_merkle_verification {
+                include!("gen/abi/boring_vault/manager_with_merkle_verification.rs");
+            }
+        }
     }
 }
 

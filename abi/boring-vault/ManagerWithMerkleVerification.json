@@ -1,0 +1,434 @@
+[
+    {
+        "type": "constructor",
+        "inputs": [
+            {
+                "name": "_owner",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "_vault",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "_balancerVault",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "authority",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract Authority"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "balancerVault",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract BalancerVault"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "flashLoan",
+        "inputs": [
+            {
+                "name": "recipient",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "tokens",
+                "type": "address[]",
+                "internalType": "address[]"
+            },
+            {
+                "name": "amounts",
+                "type": "uint256[]",
+                "internalType": "uint256[]"
+            },
+            {
+                "name": "userData",
+                "type": "bytes",
+                "internalType": "bytes"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "isPaused",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool",
+                "internalType": "bool"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "manageRoot",
+        "inputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "bytes32",
+                "internalType": "bytes32"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "manageVaultWithMerkleVerification",
+        "inputs": [
+            {
+                "name": "manageProofs",
+                "type": "bytes32[][]",
+                "internalType": "bytes32[][]"
+            },
+            {
+                "name": "decodersAndSanitizers",
+                "type": "address[]",
+                "internalType": "address[]"
+            },
+            {
+                "name": "targets",
+                "type": "address[]",
+                "internalType": "address[]"
+            },
+            {
+                "name": "targetData",
+                "type": "bytes[]",
+                "internalType": "bytes[]"
+            },
+            {
+                "name": "values",
+                "type": "uint256[]",
+                "internalType": "uint256[]"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "owner",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "pause",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "receiveFlashLoan",
+        "inputs": [
+            {
+                "name": "tokens",
+                "type": "address[]",
+                "internalType": "address[]"
+            },
+            {
+                "name": "amounts",
+                "type": "uint256[]",
+                "internalType": "uint256[]"
+            },
+            {
+                "name": "feeAmounts",
+                "type": "uint256[]",
+                "internalType": "uint256[]"
+            },
+            {
+                "name": "userData",
+                "type": "bytes",
+                "internalType": "bytes"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "setAuthority",
+        "inputs": [
+            {
+                "name": "newAuthority",
+                "type": "address",
+                "internalType": "contract Authority"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "setManageRoot",
+        "inputs": [
+            {
+                "name": "strategist",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "_manageRoot",
+                "type": "bytes32",
+                "internalType": "bytes32"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "transferOwnership",
+        "inputs": [
+            {
+                "name": "newOwner",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "unpause",
+        "inputs": [],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "vault",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract BoringVault"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "event",
+        "name": "AuthorityUpdated",
+        "inputs": [
+            {
+                "name": "user",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            },
+            {
+                "name": "newAuthority",
+                "type": "address",
+                "indexed": true,
+                "internalType": "contract Authority"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "BoringVaultManaged",
+        "inputs": [
+            {
+                "name": "callsMade",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "uint256"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "ManageRootUpdated",
+        "inputs": [
+            {
+                "name": "strategist",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            },
+            {
+                "name": "oldRoot",
+                "type": "bytes32",
+                "indexed": false,
+                "internalType": "bytes32"
+            },
+            {
+                "name": "newRoot",
+                "type": "bytes32",
+                "indexed": false,
+                "internalType": "bytes32"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "OwnershipTransferred",
+        "inputs": [
+            {
+                "name": "user",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            },
+            {
+                "name": "newOwner",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            }
+        ],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "Paused",
+        "inputs": [],
+        "anonymous": false
+    },
+    {
+        "type": "event",
+        "name": "Unpaused",
+        "inputs": [],
+        "anonymous": false
+    },
+    {
+        "type": "error",
+        "name": "AddressEmptyCode",
+        "inputs": [
+            {
+                "name": "target",
+                "type": "address",
+                "internalType": "address"
+            }
+        ]
+    },
+    {
+        "type": "error",
+        "name": "FailedInnerCall",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__BadFlashLoanIntentHash",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__FailedToVerifyManageProof",
+        "inputs": [
+            {
+                "name": "target",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "targetData",
+                "type": "bytes",
+                "internalType": "bytes"
+            },
+            {
+                "name": "value",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ]
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__FlashLoanNotExecuted",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__FlashLoanNotInProgress",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__InvalidDecodersAndSanitizersLength",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__InvalidManageProofLength",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__InvalidTargetDataLength",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__InvalidValuesLength",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__OnlyCallableByBalancerVault",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__OnlyCallableByBoringVault",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__Paused",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "ManagerWithMerkleVerification__TotalSupplyMustRemainConstantDuringPlatform",
+        "inputs": []
+    }
+]

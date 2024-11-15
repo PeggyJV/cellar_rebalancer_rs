@@ -12,7 +12,7 @@ option go_package = "/steward_proto";
 import "aave_v2_stablecoin.proto";
 import "cellar_v1.proto";
 import "cellar_v2.proto";
-
+import "boring_vault/v1/manager.proto";
 /*
  * Service for handling Cellar contract calls
  */
@@ -56,11 +56,12 @@ message ScheduleRequest {
         CellarV2 cellar_v2 = 5;
         CellarV2_2 cellar_v2_2 = 6;
         CellarV2_5 cellar_v2_5 = 7;
+        BoringVaultManagerWithMerkleVerification boring_vault_manager_with_merkle_verification = 8;
     }
     // The ID of the chain on which the target Cellar resides
-    uint64 chain_id = 8;
+    uint64 chain_id = 9;
     // The unix timestamp deadline for the contract call to be executed
-    uint64 deadline = 9;
+    uint64 deadline = 10;
 }
 
 message ScheduleResponse {

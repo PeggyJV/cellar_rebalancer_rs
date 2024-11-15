@@ -50,6 +50,15 @@ task(
         await adaptor.deployed();
         console.log(`adaptor contract deployed at - ${adaptor.address}`);
 
+        const Manager = await hre.ethers.getContractFactory("ManagerWithMerkleVerification");
+        const manager = (await Manager.deploy(
+            gravity.address,
+            "0x0000000000000000000000000000000000000000",
+            "0x0000000000000000000000000000000000000000"
+        ));
+        await manager.deployed();
+        console.log(`manager contract deployed at - ${manager.address}`);
+
         let cellarSignerAddress = await aaveCellar.signer.getAddress()
         await hre.network.provider.request({
             method: 'hardhat_impersonateAccount',
@@ -87,6 +96,14 @@ task(
         console.log(
             `Adaptor contract at ${adaptor.address} is now owned by Gravity contract at ${gravity.address} with hash ${adaptorHash}`,
         );
+
+        let { managerHash } = await manager.setOwner(gravity.address, {
+            gasPrice: hre.ethers.BigNumber.from('99916001694'),
+            from: cellarSignerAddress
+        });
+        console.log(
+            `Manager Cellar contract at ${manager.address} is now owned by Gravity contract at ${gravity.address} with hash ${managerHash}`,
+        )
 
         await hre.network.provider.send("evm_setIntervalMining", [1000]);
 
