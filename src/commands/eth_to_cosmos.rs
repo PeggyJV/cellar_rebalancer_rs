@@ -46,7 +46,9 @@ impl Runnable for EthToCosmosCmd {
             .parse()
             .expect("Invalid ERC20 contract address!");
 
-        let ethereum_wallet = config.load_ethers_wallet(self.ethereum_key.clone());
+        let ethereum_wallet = config
+            .load_ethers_wallet(self.ethereum_key.clone())
+            .expect("failed to load wallet");
 
         let gravity_address: EthAddress = self
             .gravity_address

@@ -20,7 +20,9 @@ impl Runnable for SignDelegateKeysCmd {
     fn run(&self) {
         let config = APP.config();
         abscissa_tokio::run_with_actix(&APP, async {
-            let key = config.load_clarity_key(self.ethereum_key.clone());
+            let key = config
+                .load_clarity_key(self.ethereum_key.clone())
+                .expect("failed to load key");
             let address = self.val_address.parse().expect("Could not parse address");
 
             let nonce: u64 = match self.nonce {

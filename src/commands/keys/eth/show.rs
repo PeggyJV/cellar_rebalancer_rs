@@ -18,7 +18,7 @@ impl Runnable for ShowKeyCmd {
     fn run(&self) {
         let config = APP.config();
         let keystore = path::Path::new(&config.keystore);
-        let keystore = FsKeyStore::create_or_open(keystore).expect("Could not open keystore");
+        let keystore = FsKeyStore::open(keystore).expect("Could not open keystore");
         let name = self.name.parse().expect("Could not parse name");
 
         let key = keystore.load(&name).expect("Could not load key");

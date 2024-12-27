@@ -15,8 +15,9 @@ impl Runnable for ShowCosmosKeyCmd {
     fn run(&self) {
         let config = APP.config();
         let name = self.name.clone();
-        let key = config.load_deep_space_key(name.clone());
-
+        let key = config
+            .load_deep_space_key(name.clone())
+            .expect("Could not load key");
         let address = key
             .to_address(config.cosmos.prefix.trim())
             .expect("Could not generate public key");

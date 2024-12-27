@@ -23,7 +23,7 @@ impl Runnable for RenameCosmosKeyCmd {
     fn run(&self) {
         let config = APP.config();
         let keystore = path::Path::new(&config.keystore);
-        let keystore = signatory::FsKeyStore::create_or_open(keystore).unwrap();
+        let keystore = signatory::FsKeyStore::open(keystore).unwrap();
 
         let name = self.name.parse().expect("Could not parse name");
         let new_name = self.new_name.parse().expect("Could not parse new_name");

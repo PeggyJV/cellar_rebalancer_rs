@@ -3,7 +3,7 @@
 //! See instructions in `commands.rs` to specify the path to your
 //! application's configuration file and/or command-line options
 //! for specifying it.
-use crate::{prelude::APP, somm_send::MAX_GAS_PER_BLOCK};
+use crate::{error::ErrorKind, prelude::APP, somm_send::MAX_GAS_PER_BLOCK};
 use abscissa_core::Application;
 use deep_space::{Address as CosmosAddress, PrivateKey as CosmosPrivateKey};
 use ethers::signers::LocalWallet as EthWallet;
@@ -17,7 +17,9 @@ lazy_static! {
     static ref DELEGATE_KEY: CosmosPrivateKey = {
         let config = APP.config();
         let name = &config.keys.delegate_key;
-        config.load_deep_space_key(name.clone())
+        config
+            .load_deep_space_key(name.clone())
+            .expect("failed to load delegate key")
     };
     static ref DELEGATE_ADDRESS: CosmosAddress = {
         let config = APP.config();
@@ -54,33 +56,76 @@ pub struct StewardConfig {
 }
 
 impl StewardConfig {
-    fn load_secret_key(&self, name: String) -> k256::elliptic_curve::SecretKey<k256::Secp256k1> {
+    fn load_secret_key(
+        &self,
+        name: String,
+    ) -> Result<k256::elliptic_curve::SecretKey<k256::Secp256k1>, crate::error::Error> {
         let keystore = Path::new(&self.keystore);
-        let keystore = FsKeyStore::create_or_open(keystore).expect("Could not open keystore");
+        let keystore = match FsKeyStore::open(keystore) {
+            Ok(keystore) => keystore,
+            Err(signatory::Error::NotADirectory) => {
+                return Err(ErrorKind::Config
+                    .context("keystore path is not a directory")
+                    .into());
+            }
+            Err(signatory::Error::Permissions) => {
+                return Err(ErrorKind::Config
+                    .context("insufficient permissions for keystore path")
+                    .into());
+            }
+            Err(e) => {
+                return Err(ErrorKind::Config.context(e).into());
+            }
+        };
         let name = name.parse().expect("Could not parse name");
         let key = keystore.load(&name).expect("Could not load key");
-        key.to_pem().parse().expect("Could not parse pem")
+        key.to_pem().parse().map_err(|err| {
+            ErrorKind::Config
+                .context(format!("failed to parse key {:?}", err))
+                .into()
+        })
     }
 
-    pub fn load_clarity_key(&self, name: String) -> clarity::PrivateKey {
-        let key = self.load_secret_key(name).to_bytes();
-        clarity::PrivateKey::from_slice(key.as_slice()).expect("Could not convert key")
+    pub fn load_clarity_key(
+        &self,
+        name: String,
+    ) -> Result<clarity::PrivateKey, crate::error::Error> {
+        let key = self.load_secret_key(name)?.to_bytes();
+        clarity::PrivateKey::from_slice(key.as_slice()).map_err(|err| {
+            ErrorKind::Config
+                .context(format!("failed to convert key {:?}", err))
+                .into()
+        })
     }
 
-    pub fn load_deep_space_key(&self, name: String) -> CosmosPrivateKey {
-        let key = self.load_secret_key(name).to_bytes();
+    pub fn load_deep_space_key(
+        &self,
+        name: String,
+    ) -> Result<CosmosPrivateKey, crate::error::Error> {
+        let key = self.load_secret_key(name)?.to_bytes();
         let key = deep_space::utils::bytes_to_hex_str(key.as_slice());
-        key.parse().expect("Could not parse private key")
+        key.parse().map_err(|err| {
+            ErrorKind::Config
+                .context(format!("failed to parse key {:?}", err))
+                .into()
+        })
     }
 
-    pub fn load_gravity_deep_space_key(&self, name: String) -> cosmos_gravity::crypto::PrivateKey {
-        let key = self.load_secret_key(name).to_bytes();
+    pub fn load_gravity_deep_space_key(
+        &self,
+        name: String,
+    ) -> Result<cosmos_gravity::crypto::PrivateKey, crate::error::Error> {
+        let key = self.load_secret_key(name)?.to_bytes();
         let key = deep_space::utils::bytes_to_hex_str(key.as_slice());
-        key.parse().expect("Could not parse private key")
+        key.parse().map_err(|err| {
+            ErrorKind::Config
+                .context(format!("failed to parse key {:?}", err))
+                .into()
+        })
     }
 
-    pub fn load_ethers_wallet(&self, name: String) -> EthWallet {
-        EthWallet::from(self.load_secret_key(name))
+    pub fn load_ethers_wallet(&self, name: String) -> Result<EthWallet, crate::error::Error> {
+        Ok(EthWallet::from(self.load_secret_key(name)?))
     }
 }
 

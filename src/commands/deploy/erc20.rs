@@ -44,7 +44,9 @@ impl Erc20 {
     async fn deploy(&self) {
         let config = APP.config();
 
-        let ethereum_wallet = config.load_ethers_wallet(self.ethereum_key.clone());
+        let ethereum_wallet = config
+            .load_ethers_wallet(self.ethereum_key.clone())
+            .expect("failed to load wallet");
         let contract_address = config
             .gravity
             .contract
